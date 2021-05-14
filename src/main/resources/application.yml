@@ -1,7 +1,14 @@
 axon:
   axonserver:
     enabled: false
+  serializer:
+    general: jackson
+    events: jackson
+    messages: jackson
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/axon
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: secret
+    initialization-mode: always
