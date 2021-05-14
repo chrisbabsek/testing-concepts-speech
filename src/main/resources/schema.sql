@@ -45,3 +45,10 @@ CREATE TABLE IF NOT EXISTS SagaEntry (
     serializedSaga BYTEA,
     PRIMARY KEY (sagaId)
     );
+
+CREATE TABLE IF NOT EXISTS BankAccountProjection (
+    id BIGSERIAL NOT NULL,
+    bankaccountid VARCHAR(255) NOT NULL,
+    balance FLOAT NOT NULL,
+    PRIMARY KEY (id)
+);
