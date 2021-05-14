@@ -92,7 +92,7 @@ class BankAccountAggregate() {
             MoneyTransferFailedEvent(
                 bankAccountId = command.bankAccountId,
                 targetBankAccountId = command.targetBankAccountId,
-                amount = 0.0,
+                amount = command.amount,
                 errorMessage = null
             )
         )
