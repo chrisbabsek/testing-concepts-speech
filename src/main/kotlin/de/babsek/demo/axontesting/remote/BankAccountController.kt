@@ -2,6 +2,7 @@ package de.babsek.demo.axontesting.remote
 
 import de.babsek.demo.axontesting.domain.commands.AcceptMoneyTransferCommand
 import de.babsek.demo.axontesting.domain.commands.OpenBankAccountCommand
+import de.babsek.demo.axontesting.domain.commands.TransferMoneyCommand
 import org.axonframework.commandhandling.gateway.CommandGateway
 import org.springframework.web.bind.annotation.*
 
@@ -37,6 +38,25 @@ class BankAccountController(
 
     data class PayInMoneyDto(
         val amount: Double
+    )
+
+    @PostMapping("transfers")
+    fun transferMoney(@RequestBody request: MoneyTransferDto) {
+        commandGateway.sendAndWait<Unit>(
+            TransferMoneyCommand(
+                bankAccountId = request.originBankAccountId,
+                destinationBankAccount = request.destinationBankAccountId,
+                amount = request.amount,
+                reason = request.reason
+            )
+        )
+    }
+
+    data class MoneyTransferDto(
+        val originBankAccountId: String,
+        val destinationBankAccountId: String,
+        val amount: Double,
+        val reason: String
     )
 
 }

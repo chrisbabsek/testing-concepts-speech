@@ -50,7 +50,8 @@ class BankAccountAggregate() {
         if (balance < command.amount) {
             throw NotEnoughMoneyException(
                 bankAccountId = command.bankAccountId,
-                requestedAmount = command.amount
+                requestedAmount = command.amount,
+                currentBalance = balance
             )
         } else {
             AggregateLifecycle.apply(
