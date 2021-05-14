@@ -1,7 +1,14 @@
 package de.babsek.demo.axontesting.domain
 
+import de.babsek.demo.axontesting.domain.commands.AcceptMoneyTransferCommand
+import de.babsek.demo.axontesting.domain.commands.InformFailedMoneyTransferCommand
 import de.babsek.demo.axontesting.domain.commands.OpenBankAccountCommand
+import de.babsek.demo.axontesting.domain.commands.TransferMoneyCommand
 import de.babsek.demo.axontesting.domain.events.BankAccountOpenedEvent
+import de.babsek.demo.axontesting.domain.events.MoneyTransferArrivedEvent
+import de.babsek.demo.axontesting.domain.events.MoneyTransferFailedEvent
+import de.babsek.demo.axontesting.domain.events.MoneyTransferRequestedEvent
+import de.babsek.demo.axontesting.domain.exceptions.NotEnoughMoneyException
 import org.axonframework.commandhandling.CommandHandler
 import org.axonframework.eventsourcing.EventSourcingHandler
 import org.axonframework.modelling.command.AggregateCreationPolicy
@@ -20,7 +27,7 @@ class BankAccountAggregate() {
 
     @CreationPolicy(AggregateCreationPolicy.CREATE_IF_MISSING)
     @CommandHandler
-    fun openBankAccount(command: OpenBankAccountCommand) {
+    fun openBankAccount(command: OpenBankAccountCommand): String {
         AggregateLifecycle.apply(
             BankAccountOpenedEvent(
                 bankAccountId = command.bankAccountId,
@@ -28,6 +35,7 @@ class BankAccountAggregate() {
                 initialBalance = balance
             )
         )
+        return command.bankAccountId
     }
 
     @EventSourcingHandler
@@ -35,5 +43,62 @@ class BankAccountAggregate() {
         bankAccountId = event.bankAccountId
         ownerName = event.ownerName
         balance = event.initialBalance
+    }
+
+    @CommandHandler
+    fun handleTransferMoney(command: TransferMoneyCommand) {
+        if (balance < command.amount) {
+            throw NotEnoughMoneyException(
+                bankAccountId = command.bankAccountId,
+                requestedAmount = command.amount
+            )
+        } else {
+            AggregateLifecycle.apply(
+                MoneyTransferRequestedEvent(
+                    originBankAccountId = command.bankAccountId,
+                    targetBankAccountId = command.destinationBankAccount,
+                    amount = command.amount,
+                    reason = command.reason
+                )
+            )
+        }
+    }
+
+    @EventSourcingHandler
+    fun on(event: MoneyTransferRequestedEvent) {
+        balance -= event.amount
+    }
+
+    @CommandHandler
+    fun acceptMoneyTransfer(command: AcceptMoneyTransferCommand) {
+        AggregateLifecycle.apply(
+            MoneyTransferArrivedEvent(
+                bankAccountId = command.bankAccountId,
+                amount = command.amount,
+                reason = command.reason
+            )
+        )
+    }
+
+    @EventSourcingHandler
+    fun on(event: MoneyTransferArrivedEvent) {
+        balance += event.amount
+    }
+
+    @CommandHandler
+    fun handleFailedMoneyTransfer(command: InformFailedMoneyTransferCommand) {
+        AggregateLifecycle.apply(
+            MoneyTransferFailedEvent(
+                bankAccountId = command.bankAccountId,
+                targetBankAccountId = command.targetBankAccountId,
+                amount = 0.0,
+                errorMessage = null
+            )
+        )
+    }
+
+    @EventSourcingHandler
+    fun on(event: MoneyTransferFailedEvent) {
+        balance += event.amount
     }
 }
