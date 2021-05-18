@@ -11,8 +11,8 @@ import org.springframework.boot.runApplication
         JpaEventStoreAutoConfiguration::class
         ]
 )
-class WarehouseApplication
+class BankApplication
 
 fun main() {
-    runApplication<WarehouseApplication>()
+    runApplication<BankApplication>()
 }
