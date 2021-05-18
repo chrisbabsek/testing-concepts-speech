@@ -27,25 +27,29 @@ class BankAccountProjector(
 
     @EventHandler
     fun on(event: MoneyTransferRequestedEvent) {
-        repository
-            .findByBankAccountId(event.originBankAccountId)
-            ?.let { it.copy(balance = it.balance - event.amount) }
-            ?.apply(repository::saveAndFlush)
+        updateBalance(event.originBankAccountId) {
+            it - event.amount
+        }
     }
 
     @EventHandler
     fun on(event: MoneyTransferArrivedEvent) {
-        repository
-            .findByBankAccountId(event.bankAccountId)
-            ?.let { it.copy(balance = it.balance + event.amount) }
-            ?.apply(repository::saveAndFlush)
+        updateBalance(event.bankAccountId) {
+            it + event.amount
+        }
     }
 
     @EventHandler
     fun on(event: MoneyTransferFailedEvent) {
+        updateBalance(event.bankAccountId) {
+            it + event.amount
+        }
+    }
+
+    private fun updateBalance(bankAccountId: String, balanceChanger: (Double) -> Double) {
         repository
-            .findByBankAccountId(event.bankAccountId)
-            ?.let { it.copy(balance = it.balance + event.amount) }
+            .findByBankAccountId(bankAccountId)
+            ?.let { it.copy(balance = balanceChanger(it.balance)) }
             ?.apply(repository::saveAndFlush)
     }
 }
